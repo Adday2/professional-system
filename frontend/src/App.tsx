@@ -1,42 +1,23 @@
-import { useEffect, useState } from 'react'
-import { getUsers, type User } from './services/users'
+import { BrowserRouter, Link, Route, Routes } from 'react-router-dom'
+import Dashboard from './pages/Dashboard'
+import Users from './pages/Users'
 
 function App() {
-  const [users, setUsers] = useState<User[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-
-  useEffect(() => {
-    getUsers()
-      .then(setUsers)
-      .catch(() => {
-        setError('Failed to connect to the backend.')
-      })
-      .finally(() => {
-        setLoading(false)
-      })
-  }, [])
-
   return (
-    <div>
-      <h1>Professional System</h1>
+    <BrowserRouter>
+      <nav>
+        <Link to="/">Dashboard</Link>
+        {' | '}
+        <Link to="/users">Users</Link>
+      </nav>
 
-      <h2>Users</h2>
-
-      {loading && <p>Loading users...</p>}
-
-      {error && <p>{error}</p>}
-
-      {!loading && !error && (
-        <ul>
-          {users.map((user) => (
-            <li key={user.id}>
-              {user.name} — {user.email}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
+      <main>
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/users" element={<Users />} />
+        </Routes>
+      </main>
+    </BrowserRouter>
   )
 }
 
