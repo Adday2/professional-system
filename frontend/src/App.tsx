@@ -1,22 +1,17 @@
-import { BrowserRouter, Link, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import MainLayout from './layouts/MainLayout'
 import Dashboard from './pages/Dashboard'
 import Users from './pages/Users'
 
 function App() {
   return (
     <BrowserRouter>
-      <nav>
-        <Link to="/">Dashboard</Link>
-        {' | '}
-        <Link to="/users">Users</Link>
-      </nav>
-
-      <main>
-        <Routes>
+      <Routes>
+        <Route element={<MainLayout />}>
           <Route path="/" element={<Dashboard />} />
           <Route path="/users" element={<Users />} />
-        </Routes>
-      </main>
+        </Route>
+      </Routes>
     </BrowserRouter>
   )
 }
