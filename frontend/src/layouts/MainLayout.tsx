@@ -1,3 +1,7 @@
+import {
+  LayoutDashboard,
+  UsersRound,
+} from 'lucide-react'
 import { NavLink, Outlet } from 'react-router-dom'
 
 function MainLayout() {
@@ -10,11 +14,13 @@ function MainLayout() {
 
         <nav className="sidebar-nav">
           <NavLink to="/" end>
-            Dashboard
+            <LayoutDashboard size={18} strokeWidth={2} />
+            <span>Dashboard</span>
           </NavLink>
 
           <NavLink to="/users">
-            Users
+            <UsersRound size={18} strokeWidth={2} />
+            <span>Users</span>
           </NavLink>
         </nav>
       </aside>
