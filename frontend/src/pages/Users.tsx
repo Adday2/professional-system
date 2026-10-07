@@ -1,7 +1,11 @@
 import { FormEvent, useMemo, useState } from 'react'
-import { Search, UserRoundX } from 'lucide-react'
 import { AxiosError } from 'axios'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Search, UserRoundX } from 'lucide-react'
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
 import {
   createUser,
   deleteUser,
@@ -36,6 +40,7 @@ function Users() {
 
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [editingId, setEditingId] = useState<number | null>(null)
   const [search, setSearch] = useState('')
 
@@ -69,13 +74,14 @@ function Users() {
     mutationFn: createUser,
 
     onSuccess: (newUser) => {
-      queryClient.setQueryData<User[]>(['users'], (currentUsers = []) => [
-        ...currentUsers,
-        newUser,
-      ])
+      queryClient.setQueryData<User[]>(
+        ['users'],
+        (currentUsers = []) => [...currentUsers, newUser],
+      )
 
       setName('')
       setEmail('')
+      setPassword('')
       setSuccess('User created successfully.')
     },
 
@@ -95,18 +101,26 @@ function Users() {
       data,
     }: {
       id: number
-      data: { name: string; email: string }
+      data: {
+        name: string
+        email: string
+      }
     }) => updateUser(id, data),
 
     onSuccess: (updatedUser) => {
-      queryClient.setQueryData<User[]>(['users'], (currentUsers = []) =>
-        currentUsers.map((user) =>
-          user.id === updatedUser.id ? updatedUser : user,
-        ),
+      queryClient.setQueryData<User[]>(
+        ['users'],
+        (currentUsers = []) =>
+          currentUsers.map((user) =>
+            user.id === updatedUser.id
+              ? updatedUser
+              : user,
+          ),
       )
 
       setName('')
       setEmail('')
+      setPassword('')
       setEditingId(null)
       setSuccess('User updated successfully.')
     },
@@ -125,8 +139,12 @@ function Users() {
     mutationFn: deleteUser,
 
     onSuccess: (_, deletedId) => {
-      queryClient.setQueryData<User[]>(['users'], (currentUsers = []) =>
-        currentUsers.filter((user) => user.id !== deletedId),
+      queryClient.setQueryData<User[]>(
+        ['users'],
+        (currentUsers = []) =>
+          currentUsers.filter(
+            (user) => user.id !== deletedId,
+          ),
       )
 
       setSuccess('User deleted successfully.')
@@ -142,7 +160,9 @@ function Users() {
     },
   })
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  function handleSubmit(
+    event: FormEvent<HTMLFormElement>,
+  ) {
     event.preventDefault()
 
     setError('')
@@ -163,6 +183,7 @@ function Users() {
     createMutation.mutate({
       name,
       email,
+      password,
     })
   }
 
@@ -173,12 +194,14 @@ function Users() {
     setEditingId(user.id)
     setName(user.name)
     setEmail(user.email)
+    setPassword('')
   }
 
   function handleCancelEdit() {
     setEditingId(null)
     setName('')
     setEmail('')
+    setPassword('')
     setError('')
     setSuccess('')
   }
@@ -210,9 +233,14 @@ function Users() {
       </div>
 
       <div className="create-user-card">
-        <h2>{editingId !== null ? 'Edit User' : 'Add User'}</h2>
+        <h2>
+          {editingId !== null ? 'Edit User' : 'Add User'}
+        </h2>
 
-        <form onSubmit={handleSubmit} className="create-user-form">
+        <form
+          onSubmit={handleSubmit}
+          className="create-user-form"
+        >
           <div className="form-group">
             <label htmlFor="name">Name</label>
 
@@ -220,7 +248,9 @@ function Users() {
               id="name"
               type="text"
               value={name}
-              onChange={(event) => setName(event.target.value)}
+              onChange={(event) =>
+                setName(event.target.value)
+              }
               placeholder="Enter user name"
               required
             />
@@ -233,14 +263,37 @@ function Users() {
               id="email"
               type="email"
               value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              onChange={(event) =>
+                setEmail(event.target.value)
+              }
               placeholder="Enter email address"
               required
             />
           </div>
 
+          {editingId === null && (
+            <div className="form-group">
+              <label htmlFor="password">Password</label>
+
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(event) =>
+                  setPassword(event.target.value)
+                }
+                placeholder="Minimum 8 characters"
+                minLength={8}
+                required
+              />
+            </div>
+          )}
+
           <div className="form-actions">
-            <button type="submit" disabled={formBusy}>
+            <button
+              type="submit"
+              disabled={formBusy}
+            >
               {updateMutation.isPending
                 ? 'Updating...'
                 : createMutation.isPending
@@ -263,8 +316,17 @@ function Users() {
           </div>
         </form>
 
-        {success && <p className="success-message">{success}</p>}
-        {error && <p className="error-message">{error}</p>}
+        {success && (
+          <p className="success-message">
+            {success}
+          </p>
+        )}
+
+        {error && (
+          <p className="error-message">
+            {error}
+          </p>
+        )}
       </div>
 
       <div className="users-toolbar">
@@ -274,7 +336,9 @@ function Users() {
           <input
             type="search"
             value={search}
-            onChange={(event) => setSearch(event.target.value)}
+            onChange={(event) =>
+              setSearch(event.target.value)
+            }
             placeholder="Search by name or email..."
             aria-label="Search users"
           />
@@ -289,12 +353,19 @@ function Users() {
 
       <div className="users-table-container">
         {isLoading ? (
-          <p className="users-loading">Loading users...</p>
+          <p className="users-loading">
+            Loading users...
+          </p>
         ) : isError ? (
-          <p className="error-message">Failed to load users.</p>
+          <p className="error-message">
+            Failed to load users.
+          </p>
         ) : filteredUsers.length === 0 ? (
           <div className="users-empty-state">
-            <UserRoundX size={40} strokeWidth={1.7} />
+            <UserRoundX
+              size={40}
+              strokeWidth={1.7}
+            />
 
             <h3>
               {users.length === 0
@@ -332,7 +403,9 @@ function Users() {
                   <td>{user.email}</td>
 
                   <td>
-                    {new Date(user.created_at).toLocaleDateString()}
+                    {new Date(
+                      user.created_at,
+                    ).toLocaleDateString()}
                   </td>
 
                   <td>
@@ -340,8 +413,12 @@ function Users() {
                       <button
                         type="button"
                         className="edit-button"
-                        onClick={() => handleEdit(user)}
-                        disabled={deleteMutation.isPending}
+                        onClick={() =>
+                          handleEdit(user)
+                        }
+                        disabled={
+                          deleteMutation.isPending
+                        }
                       >
                         Edit
                       </button>
@@ -349,8 +426,12 @@ function Users() {
                       <button
                         type="button"
                         className="delete-button"
-                        onClick={() => handleDelete(user)}
-                        disabled={deleteMutation.isPending}
+                        onClick={() =>
+                          handleDelete(user)
+                        }
+                        disabled={
+                          deleteMutation.isPending
+                        }
                       >
                         {deleteMutation.isPending
                           ? 'Deleting...'

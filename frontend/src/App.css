@@ -85,10 +85,12 @@ body {
 }
 
 .topbar {
-  height: 72px;
+  min-height: 72px;
   display: flex;
   align-items: center;
-  padding: 0 32px;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 12px 32px;
   border-bottom: 1px solid #e5e7eb;
   background: #ffffff;
 }
@@ -97,6 +99,60 @@ body {
   margin: 0;
   font-size: 20px;
   font-weight: 600;
+}
+
+.topbar-user {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.topbar-user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #374151;
+}
+
+.topbar-user-info > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.topbar-user-info strong {
+  color: #111827;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.topbar-user-info span {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.logout-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #374151;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.logout-button:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
 }
 
 .page-content {
@@ -227,7 +283,7 @@ body {
 
 .create-user-form {
   display: grid;
-  grid-template-columns: 1fr 1fr auto;
+  grid-template-columns: 1fr 1fr 1fr auto;
   gap: 16px;
   align-items: end;
 }
@@ -460,12 +516,28 @@ body {
   }
 
   .topbar {
-    height: 60px;
-    padding: 0 20px;
+    min-height: 60px;
+    padding: 10px 20px;
   }
 
   .topbar h1 {
     font-size: 18px;
+  }
+
+  .topbar-user {
+    gap: 8px;
+  }
+
+  .topbar-user-info > div {
+    display: none;
+  }
+
+  .logout-button {
+    padding: 0 10px;
+  }
+
+  .logout-button span {
+    display: none;
   }
 
   .page-content {
@@ -584,4 +656,141 @@ body {
   .users-search {
     width: 100%;
   }
+}
+
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: #f8fafc;
+}
+
+.login-card {
+  width: min(100%, 420px);
+  padding: 32px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgb(0 0 0 / 8%);
+}
+
+.login-header {
+  margin-bottom: 28px;
+  text-align: center;
+}
+
+.login-icon {
+  width: 48px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  border-radius: 12px;
+  background: #111827;
+  color: #ffffff;
+}
+
+.login-header h1 {
+  margin: 0 0 8px;
+  font-size: 26px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.login-header p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.login-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 44px;
+  padding: 0 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #6b7280;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.login-input-wrapper:focus-within {
+  border-color: #111827;
+  box-shadow: 0 0 0 3px rgb(17 24 39 / 10%);
+}
+
+.login-input-wrapper input {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #111827;
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.login-input-wrapper input::placeholder {
+  color: #9ca3af;
+}
+
+.login-error {
+  margin: -4px 0 0;
+  color: #b91c1c;
+  font-size: 14px;
+}
+
+.login-button {
+  width: 100%;
+  height: 44px;
+  margin-top: 2px;
+  border: none;
+  border-radius: 8px;
+  background: #111827;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.login-button:hover:not(:disabled) {
+  background: #1f2937;
+}
+
+.login-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.auth-loading {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8fafc;
+}
+
+.auth-loading p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 14px;
 }

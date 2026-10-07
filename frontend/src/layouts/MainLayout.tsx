@@ -1,10 +1,21 @@
 import {
+  CircleUserRound,
   LayoutDashboard,
+  LogOut,
   UsersRound,
 } from 'lucide-react'
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
 
 function MainLayout() {
+  const navigate = useNavigate()
+  const { user, logout } = useAuth()
+
+  function handleLogout() {
+    logout()
+    navigate('/login', { replace: true })
+  }
+
   return (
     <div className="app-layout">
       <aside className="sidebar">
@@ -14,12 +25,18 @@ function MainLayout() {
 
         <nav className="sidebar-nav">
           <NavLink to="/" end>
-            <LayoutDashboard size={18} strokeWidth={2} />
+            <LayoutDashboard
+              size={18}
+              strokeWidth={2}
+            />
             <span>Dashboard</span>
           </NavLink>
 
           <NavLink to="/users">
-            <UsersRound size={18} strokeWidth={2} />
+            <UsersRound
+              size={18}
+              strokeWidth={2}
+            />
             <span>Users</span>
           </NavLink>
         </nav>
@@ -28,6 +45,32 @@ function MainLayout() {
       <div className="main-area">
         <header className="topbar">
           <h1>Professional System</h1>
+
+          <div className="topbar-user">
+            <div className="topbar-user-info">
+              <CircleUserRound
+                size={20}
+                strokeWidth={2}
+              />
+
+              <div>
+                <strong>{user?.name}</strong>
+                <span>{user?.email}</span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              className="logout-button"
+              onClick={handleLogout}
+            >
+              <LogOut
+                size={17}
+                strokeWidth={2}
+              />
+              <span>Logout</span>
+            </button>
+          </div>
         </header>
 
         <main className="page-content">

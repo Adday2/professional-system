@@ -4,9 +4,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.core.security import hash_password
 from app.database import get_db
 from app.models import User
-from app.schemas import UserCreate, UserResponse
+from app.schemas import UserCreate, UserResponse, UserUpdate
 
 
 router = APIRouter(prefix="/users", tags=["Users"])
@@ -29,6 +30,9 @@ def create_user(
     user = User(
         name=user_data.name,
         email=user_data.email,
+        password_hash=hash_password(
+            user_data.password.get_secret_value()
+        ),
         created_at=datetime.now(),
     )
 
@@ -74,7 +78,7 @@ def delete_user(
 @router.put("/{user_id}", response_model=UserResponse)
 def update_user(
     user_id: int,
-    user_data: UserCreate,
+    user_data: UserUpdate,
     db: Session = Depends(get_db),
 ):
     user = db.query(User).filter(User.id == user_id).first()

@@ -10,6 +10,12 @@ export interface User {
 export interface CreateUserData {
   name: string
   email: string
+  password: string
+}
+
+export interface UpdateUserData {
+  name: string
+  email: string
 }
 
 export async function getUsers(): Promise<User[]> {
@@ -30,7 +36,7 @@ export async function deleteUser(id: number): Promise<void> {
 
 export async function updateUser(
   id: number,
-  data: CreateUserData,
+  data: UpdateUserData,
 ): Promise<User> {
   const response = await api.put<User>(`/users/${id}`, data)
   return response.data
