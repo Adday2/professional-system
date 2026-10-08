@@ -9,8 +9,13 @@ export interface CurrentUser {
   id: number
   name: string
   email: string
-  role: string
+  role: 'admin' | 'user'
   created_at: string
+}
+
+export interface ChangePasswordData {
+  current_password: string
+  new_password: string
 }
 
 export async function login(
@@ -27,7 +32,8 @@ export async function login(
     formData,
     {
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Type':
+          'application/x-www-form-urlencoded',
       },
     },
   )
@@ -36,6 +42,20 @@ export async function login(
 }
 
 export async function getCurrentUser(): Promise<CurrentUser> {
-  const response = await api.get<CurrentUser>('/auth/me')
+  const response = await api.get<CurrentUser>(
+    '/auth/me',
+  )
+
+  return response.data
+}
+
+export async function changePassword(
+  data: ChangePasswordData,
+): Promise<{ message: string }> {
+  const response = await api.post<{ message: string }>(
+    '/auth/change-password',
+    data,
+  )
+
   return response.data
 }

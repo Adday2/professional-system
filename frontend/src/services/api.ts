@@ -19,4 +19,22 @@ api.interceptors.request.use((config) => {
   return config
 })
 
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (
+      error.response?.status === 401 &&
+      sessionStorage.getItem('access_token')
+    ) {
+      sessionStorage.removeItem('access_token')
+
+      window.dispatchEvent(
+        new Event('auth:session-expired'),
+      )
+    }
+
+    return Promise.reject(error)
+  },
+)
+
 export default api

@@ -9,6 +9,7 @@ import MainLayout from './layouts/MainLayout'
 import Dashboard from './pages/Dashboard'
 import Login from './pages/Login'
 import Users from './pages/Users'
+import Profile from './pages/Profile'
 
 function App() {
   return (
@@ -19,6 +20,8 @@ function App() {
         <Route element={<ProtectedRoute />}>
           <Route element={<MainLayout />}>
             <Route path="/" element={<Dashboard />} />
+            
+            <Route path="/profile" element={<Profile />} />
 
             <Route element={<AdminRoute />}>
               <Route

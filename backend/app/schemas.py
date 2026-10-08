@@ -18,6 +18,9 @@ class UserUpdate(BaseModel):
 class RoleUpdate(BaseModel):
     role: Literal["admin", "user"]
 
+class PasswordChange(BaseModel):
+    current_password: SecretStr
+    new_password: SecretStr = Field(min_length=8)
 
 class UserResponse(BaseModel):
     id: int
@@ -29,3 +32,4 @@ class UserResponse(BaseModel):
     model_config = {
         "from_attributes": True
     }
+

@@ -33,11 +33,15 @@ export function AuthProvider({
 }: AuthProviderProps) {
   const queryClient = useQueryClient()
 
-  const [user, setUser] = useState<CurrentUser | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [user, setUser] =
+    useState<CurrentUser | null>(null)
+
+  const [isLoading, setIsLoading] =
+    useState(true)
 
   useEffect(() => {
-    const token = sessionStorage.getItem('access_token')
+    const token =
+      sessionStorage.getItem('access_token')
 
     if (!token) {
       setIsLoading(false)
@@ -49,13 +53,39 @@ export function AuthProvider({
         setUser(currentUser)
       })
       .catch(() => {
-        sessionStorage.removeItem('access_token')
+        sessionStorage.removeItem(
+          'access_token',
+        )
+
         queryClient.clear()
         setUser(null)
       })
       .finally(() => {
         setIsLoading(false)
       })
+  }, [queryClient])
+
+  useEffect(() => {
+    function handleSessionExpired() {
+      sessionStorage.removeItem(
+        'access_token',
+      )
+
+      queryClient.clear()
+      setUser(null)
+    }
+
+    window.addEventListener(
+      'auth:session-expired',
+      handleSessionExpired,
+    )
+
+    return () => {
+      window.removeEventListener(
+        'auth:session-expired',
+        handleSessionExpired,
+      )
+    }
   }, [queryClient])
 
   async function login(
@@ -74,13 +104,17 @@ export function AuthProvider({
 
     queryClient.clear()
 
-    const currentUser = await getCurrentUser()
+    const currentUser =
+      await getCurrentUser()
 
     setUser(currentUser)
   }
 
   function logout() {
-    sessionStorage.removeItem('access_token')
+    sessionStorage.removeItem(
+      'access_token',
+    )
+
     queryClient.clear()
     setUser(null)
   }
@@ -88,7 +122,8 @@ export function AuthProvider({
   const value: AuthContextValue = {
     user,
     isLoading,
-    isAuthenticated: user !== null,
+    isAuthenticated:
+      user !== null,
     login,
     logout,
   }

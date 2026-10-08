@@ -2,6 +2,7 @@ import {
   CircleUserRound,
   LayoutDashboard,
   LogOut,
+  UserCircle,
   UsersRound,
 } from 'lucide-react'
 import {
@@ -34,6 +35,14 @@ function MainLayout() {
               strokeWidth={2}
             />
             <span>Dashboard</span>
+          </NavLink>
+
+          <NavLink to="/profile">
+            <UserCircle
+              size={18}
+              strokeWidth={2}
+            />
+            <span>Profile</span>
           </NavLink>
 
           {user?.role === 'admin' && (
