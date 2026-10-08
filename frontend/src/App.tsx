@@ -3,8 +3,9 @@ import {
   Route,
   Routes,
 } from 'react-router-dom'
-import MainLayout from './layouts/MainLayout'
+import AdminRoute from './components/AdminRoute'
 import ProtectedRoute from './components/ProtectedRoute'
+import MainLayout from './layouts/MainLayout'
 import Dashboard from './pages/Dashboard'
 import Login from './pages/Login'
 import Users from './pages/Users'
@@ -18,7 +19,13 @@ function App() {
         <Route element={<ProtectedRoute />}>
           <Route element={<MainLayout />}>
             <Route path="/" element={<Dashboard />} />
-            <Route path="/users" element={<Users />} />
+
+            <Route element={<AdminRoute />}>
+              <Route
+                path="/users"
+                element={<Users />}
+              />
+            </Route>
           </Route>
         </Route>
       </Routes>

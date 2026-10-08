@@ -4,7 +4,11 @@ import {
   LogOut,
   UsersRound,
 } from 'lucide-react'
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import {
+  NavLink,
+  Outlet,
+  useNavigate,
+} from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 
 function MainLayout() {
@@ -32,13 +36,15 @@ function MainLayout() {
             <span>Dashboard</span>
           </NavLink>
 
-          <NavLink to="/users">
-            <UsersRound
-              size={18}
-              strokeWidth={2}
-            />
-            <span>Users</span>
-          </NavLink>
+          {user?.role === 'admin' && (
+            <NavLink to="/users">
+              <UsersRound
+                size={18}
+                strokeWidth={2}
+              />
+              <span>Users</span>
+            </NavLink>
+          )}
         </nav>
       </aside>
 
@@ -55,7 +61,9 @@ function MainLayout() {
 
               <div>
                 <strong>{user?.name}</strong>
-                <span>{user?.email}</span>
+                <span>
+                  {user?.email} · {user?.role}
+                </span>
               </div>
             </div>
 

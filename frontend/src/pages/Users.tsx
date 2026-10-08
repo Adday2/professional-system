@@ -1,16 +1,21 @@
-import { FormEvent, useMemo, useState } from 'react'
+import { useMemo, useState, type FormEvent } from 'react'
 import { AxiosError } from 'axios'
-import { Search, UserRoundX } from 'lucide-react'
+import {
+  Search,
+  UserRoundX,
+} from 'lucide-react'
 import {
   useMutation,
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query'
+import { useAuth } from '../contexts/AuthContext'
 import {
   createUser,
   deleteUser,
   getUsers,
   updateUser,
+  updateUserRole,
   type User,
 } from '../services/users'
 
@@ -23,9 +28,10 @@ function getApiErrorMessage(
   fallback: string,
 ): string {
   if (error instanceof AxiosError) {
-    const responseData = error.response?.data as
-      | ApiErrorResponse
-      | undefined
+    const responseData =
+      error.response?.data as
+        | ApiErrorResponse
+        | undefined
 
     if (responseData?.detail) {
       return responseData.detail
@@ -37,11 +43,13 @@ function getApiErrorMessage(
 
 function Users() {
   const queryClient = useQueryClient()
+  const { user: currentUser } = useAuth()
 
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [editingId, setEditingId] = useState<number | null>(null)
+  const [editingId, setEditingId] =
+    useState<number | null>(null)
   const [search, setSearch] = useState('')
 
   const [error, setError] = useState('')
@@ -65,8 +73,12 @@ function Users() {
 
     return users.filter(
       (user) =>
-        user.name.toLowerCase().includes(searchTerm) ||
-        user.email.toLowerCase().includes(searchTerm),
+        user.name
+          .toLowerCase()
+          .includes(searchTerm) ||
+        user.email
+          .toLowerCase()
+          .includes(searchTerm),
     )
   }, [users, search])
 
@@ -76,7 +88,10 @@ function Users() {
     onSuccess: (newUser) => {
       queryClient.setQueryData<User[]>(
         ['users'],
-        (currentUsers = []) => [...currentUsers, newUser],
+        (currentUsers = []) => [
+          ...currentUsers,
+          newUser,
+        ],
       )
 
       setName('')
@@ -160,6 +175,45 @@ function Users() {
     },
   })
 
+  const roleMutation = useMutation({
+    mutationFn: ({
+      id,
+      role,
+    }: {
+      id: number
+      role: 'admin' | 'user'
+    }) =>
+      updateUserRole(id, {
+        role,
+      }),
+
+    onSuccess: (updatedUser) => {
+      queryClient.setQueryData<User[]>(
+        ['users'],
+        (currentUsers = []) =>
+          currentUsers.map((user) =>
+            user.id === updatedUser.id
+              ? updatedUser
+              : user,
+          ),
+      )
+
+      setError('')
+      setSuccess(
+        `${updatedUser.name}'s role was changed to ${updatedUser.role}.`,
+      )
+    },
+
+    onError: (error) => {
+      setError(
+        getApiErrorMessage(
+          error,
+          'Failed to update user role.',
+        ),
+      )
+    },
+  })
+
   function handleSubmit(
     event: FormEvent<HTMLFormElement>,
   ) {
@@ -221,20 +275,57 @@ function Users() {
     deleteMutation.mutate(user.id)
   }
 
+  function handleRoleChange(
+    user: User,
+    role: 'admin' | 'user',
+  ) {
+    if (user.id === currentUser?.id) {
+      return
+    }
+
+    if (role === user.role) {
+      return
+    }
+
+    const confirmed = window.confirm(
+      `Change ${user.name}'s role to ${role}?`,
+    )
+
+    if (!confirmed) {
+      return
+    }
+
+    setError('')
+    setSuccess('')
+
+    roleMutation.mutate({
+      id: user.id,
+      role,
+    })
+  }
+
   const formBusy =
     createMutation.isPending ||
     updateMutation.isPending
+
+  const tableBusy =
+    deleteMutation.isPending ||
+    roleMutation.isPending
 
   return (
     <div className="users-page">
       <div className="page-header">
         <h1>Users</h1>
-        <p>Manage and view system users.</p>
+        <p>
+          Manage users, accounts, and permissions.
+        </p>
       </div>
 
       <div className="create-user-card">
         <h2>
-          {editingId !== null ? 'Edit User' : 'Add User'}
+          {editingId !== null
+            ? 'Edit User'
+            : 'Add User'}
         </h2>
 
         <form
@@ -273,7 +364,9 @@ function Users() {
 
           {editingId === null && (
             <div className="form-group">
-              <label htmlFor="password">Password</label>
+              <label htmlFor="password">
+                Password
+              </label>
 
               <input
                 id="password"
@@ -284,6 +377,7 @@ function Users() {
                 }
                 placeholder="Minimum 8 characters"
                 minLength={8}
+                autoComplete="new-password"
                 required
               />
             </div>
@@ -331,7 +425,10 @@ function Users() {
 
       <div className="users-toolbar">
         <div className="users-search">
-          <Search size={18} strokeWidth={2} />
+          <Search
+            size={18}
+            strokeWidth={2}
+          />
 
           <input
             type="search"
@@ -346,7 +443,8 @@ function Users() {
 
         {!isLoading && !isError && (
           <span className="users-count">
-            {filteredUsers.length} of {users.length} users
+            {filteredUsers.length} of{' '}
+            {users.length} users
           </span>
         )}
       </div>
@@ -386,61 +484,98 @@ function Users() {
                 <th>ID</th>
                 <th>Name</th>
                 <th>Email</th>
+                <th>Role</th>
                 <th>Created</th>
                 <th>Actions</th>
               </tr>
             </thead>
 
             <tbody>
-              {filteredUsers.map((user) => (
-                <tr key={user.id}>
-                  <td>{user.id}</td>
+              {filteredUsers.map((user) => {
+                const isCurrentUser =
+                  user.id === currentUser?.id
 
-                  <td className="user-name">
-                    {user.name}
-                  </td>
+                return (
+                  <tr key={user.id}>
+                    <td>{user.id}</td>
 
-                  <td>{user.email}</td>
+                    <td className="user-name">
+                      {user.name}
+                    </td>
 
-                  <td>
-                    {new Date(
-                      user.created_at,
-                    ).toLocaleDateString()}
-                  </td>
+                    <td>{user.email}</td>
 
-                  <td>
-                    <div className="table-actions">
-                      <button
-                        type="button"
-                        className="edit-button"
-                        onClick={() =>
-                          handleEdit(user)
-                        }
-                        disabled={
-                          deleteMutation.isPending
-                        }
-                      >
-                        Edit
-                      </button>
+                    <td>
+                      {isCurrentUser ? (
+                        <span
+                          className={`role-badge role-${user.role}`}
+                        >
+                          {user.role}
+                        </span>
+                      ) : (
+                        <select
+                          className="role-select"
+                          value={user.role}
+                          onChange={(event) =>
+                            handleRoleChange(
+                              user,
+                              event.target.value as
+                                | 'admin'
+                                | 'user',
+                            )
+                          }
+                          disabled={
+                            tableBusy
+                          }
+                          aria-label={`Change role for ${user.name}`}
+                        >
+                          <option value="user">
+                            User
+                          </option>
 
-                      <button
-                        type="button"
-                        className="delete-button"
-                        onClick={() =>
-                          handleDelete(user)
-                        }
-                        disabled={
-                          deleteMutation.isPending
-                        }
-                      >
-                        {deleteMutation.isPending
-                          ? 'Deleting...'
-                          : 'Delete'}
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                          <option value="admin">
+                            Admin
+                          </option>
+                        </select>
+                      )}
+                    </td>
+
+                    <td>
+                      {new Date(
+                        user.created_at,
+                      ).toLocaleDateString()}
+                    </td>
+
+                    <td>
+                      <div className="table-actions">
+                        <button
+                          type="button"
+                          className="edit-button"
+                          onClick={() =>
+                            handleEdit(user)
+                          }
+                          disabled={tableBusy}
+                        >
+                          Edit
+                        </button>
+
+                        <button
+                          type="button"
+                          className="delete-button"
+                          onClick={() =>
+                            handleDelete(user)
+                          }
+                          disabled={tableBusy}
+                        >
+                          {deleteMutation.isPending
+                            ? 'Deleting...'
+                            : 'Delete'}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         )}

@@ -567,7 +567,7 @@ body {
   }
 
   .users-table {
-    min-width: 700px;
+    min-width: 780px;
   }
 
   .dashboard-grid {
@@ -793,4 +793,49 @@ body {
   margin: 0;
   color: #6b7280;
   font-size: 14px;
+}
+
+.role-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.role-admin {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+.role-user {
+  background: #f9fafb;
+  color: #6b7280;
+}
+
+.role-select {
+  min-width: 90px;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #374151;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+}
+
+.role-select:focus {
+  border-color: #111827;
+  box-shadow: 0 0 0 3px rgb(17 24 39 / 10%);
+}
+
+.role-select:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
 }

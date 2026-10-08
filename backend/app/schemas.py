@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, EmailStr, Field, SecretStr
 
@@ -14,10 +15,15 @@ class UserUpdate(BaseModel):
     email: EmailStr
 
 
+class RoleUpdate(BaseModel):
+    role: Literal["admin", "user"]
+
+
 class UserResponse(BaseModel):
     id: int
     name: str
     email: EmailStr
+    role: Literal["admin", "user"]
     created_at: datetime
 
     model_config = {
