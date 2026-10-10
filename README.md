@@ -1,25 +1,26 @@
 # Professional System
 
-A full-stack web application built with React, TypeScript, FastAPI, and PostgreSQL. The application includes JWT authentication, role-based authorization, user management, password security, automated testing, and Docker-based deployment.
+A full-stack web application built with React, TypeScript, FastAPI, and PostgreSQL. The system includes JWT authentication, role-based authorization, user management, password security, automated testing, and Docker-based deployment.
 
 ## Features
 
 - User login and JWT authentication
-- Password hashing with Argon2
+- Secure password hashing with Argon2
 - User profile and password changing
 - Role-based authorization for administrators and regular users
-- Admin user management: create, view, edit, and delete users
-- Admin role management
+- User management: create, view, edit, and delete users
+- Administrator role management
 - Login rate limiting
-- Dashboard and system health check
+- Dashboard and API health checks
 - Database migrations with Alembic
-- Docker Compose for running the full application
+- Docker Compose for running the complete application
 - Automated frontend and backend tests
-- GitHub Actions CI for tests, production builds, and Docker image validation
+- GitHub Actions CI for testing, production builds, and Docker image validation
 
 ## Technology Stack
 
 ### Frontend
+
 - React
 - TypeScript
 - Vite
@@ -31,6 +32,7 @@ A full-stack web application built with React, TypeScript, FastAPI, and PostgreS
 - React Testing Library
 
 ### Backend
+
 - Python
 - FastAPI
 - Uvicorn
@@ -39,11 +41,12 @@ A full-stack web application built with React, TypeScript, FastAPI, and PostgreS
 - Psycopg
 - Alembic
 - PyJWT
-- Argon2 password hashing through `pwdlib`
+- Argon2 password hashing with `pwdlib`
 - SlowAPI
 - pytest
 
 ### Database and DevOps
+
 - PostgreSQL 18
 - Docker
 - Docker Compose
@@ -83,14 +86,14 @@ professional-system/
 
 ## Requirements
 
-To run the complete application with Docker, install:
+To run the complete application with Docker, you need:
 
 - Docker Desktop
 - Git
 
-For local development without Docker, you will also need Node.js and Python, along with a PostgreSQL database.
+For local development without Docker, you will also need Node.js, Python, and a PostgreSQL database.
 
-## Getting Started with Docker
+## Getting Started
 
 ### 1. Clone the repository
 
@@ -101,41 +104,53 @@ cd professional-system
 
 ### 2. Configure environment variables
 
-Create a local `.env` file from the example:
+Create a local environment file from the example:
 
 ```powershell
 Copy-Item .env.example .env
 ```
 
-Edit `.env` and replace the placeholder values with strong, randomly generated secrets.
+Open `.env` and replace the placeholder values with secure, randomly generated secrets.
 
-Configure the PostgreSQL database name, username, and password, JWT secret, application environment, log level, CORS origins, and frontend API URL.
+Configure the PostgreSQL database name, username and password, JWT secret, application environment, log level, CORS origins, and frontend API URL.
 
-Never commit `.env` or share its secrets. The actual `.env` file is excluded from Git.
+**Important:** Never commit your real `.env` file or share its secrets. The file is excluded from Git.
 
 ### 3. Build and start the application
+
+From the project root, run:
 
 ```powershell
 docker compose up -d --build
 ```
 
-Docker Compose starts PostgreSQL, the FastAPI backend, and the React frontend. Database migrations run when the backend starts.
+Docker Compose starts the three services:
+
+- React frontend served by Nginx
+- FastAPI backend
+- PostgreSQL database with persistent storage
+
+The backend runs database migrations during startup.
 
 ### 4. Create the initial administrator
+
+Run:
 
 ```powershell
 docker compose exec backend python -m app.create_admin
 ```
 
-Follow the prompts to create an administrator account. Use a strong password.
+Follow the prompts to enter the administrator's name, email, and password.
+
+Use a strong password and keep it private.
 
 ### 5. Open the application
 
-- Frontend: http://localhost:5173
-- API health check: http://localhost:8000/health
-- API documentation in development mode: http://localhost:8000/docs
+- **Frontend:** http://localhost:5173
+- **API health check:** http://localhost:8000/health
+- **API documentation:** http://localhost:8000/docs (available in development mode)
 
-Log in using the administrator email and password created in the previous step.
+Sign in using the administrator credentials created in the previous step.
 
 ## Useful Docker Commands
 
@@ -157,7 +172,7 @@ Restart services:
 docker compose restart
 ```
 
-Stop services without deleting the database volume:
+Stop the application while preserving the database volume:
 
 ```powershell
 docker compose down
@@ -169,7 +184,7 @@ docker compose down
 
 ### Run all tests on Windows
 
-From the project root:
+From the project root, run:
 
 ```powershell
 .\scripts\test-all.ps1
@@ -194,40 +209,47 @@ cd backend
 pytest -v
 ```
 
-The backend tests use an isolated SQLite test database rather than your application database.
+The backend tests use an isolated SQLite test database rather than the application's PostgreSQL database.
 
 ## Continuous Integration
 
-GitHub Actions runs the frontend tests and production build, backend tests, and Docker image builds on pushes and pull requests targeting `main`.
+GitHub Actions automatically runs the following checks on pushes and pull requests targeting the `main` branch:
 
-Workflow configuration:
+- Frontend tests
+- Frontend production build
+- Backend tests
+- Backend Docker image build
+- Frontend Docker image build
+
+The workflow is defined in:
 
 ```text
 .github/workflows/ci.yml
 ```
 
-Check the repository's **Actions** tab to review each workflow run.
+Visit the repository's **Actions** tab to review workflow results:
 
-## Security Notes
+https://github.com/Adday2/professional-system/actions
 
-- Passwords are hashed using Argon2; plaintext passwords are not stored.
+## Security
+
+The application includes the following security measures:
+
+- Passwords are hashed with Argon2 rather than stored as plaintext.
 - JWT access tokens have a configurable expiration.
 - User-management endpoints enforce administrator permissions on the backend.
 - Login attempts are rate-limited.
-- Secrets are supplied through environment variables rather than committed to Git.
-- Interactive API documentation can be disabled by setting `APP_ENV=production`.
-- CORS origins should be restricted to trusted frontend addresses.
-- Production deployment should use HTTPS and an appropriately secured hosting environment.
+- Environment variables are used for secrets and configuration.
+- API documentation can be disabled by setting `APP_ENV=production`.
+- CORS origins can be configured for trusted frontend addresses.
 
-## Current Deployment Model
+Before public production deployment, configure HTTPS, secure hosting, database backups, appropriate logging and monitoring, and production environment variables.
 
-The application can run locally as three Docker Compose services:
+## Deployment
 
-1. React frontend served by Nginx
-2. FastAPI backend
-3. PostgreSQL database with persistent storage
+The application currently runs locally through Docker Compose.
 
-Production hosting, domain configuration, HTTPS, backup procedures, and monitoring must be configured separately before public deployment.
+Public production hosting, domain configuration, HTTPS, automated backup procedures, and production monitoring must be configured separately before the system is publicly deployed.
 
 ## License
 
