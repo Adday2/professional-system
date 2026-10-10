@@ -32,3 +32,6 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Database backups can contain sensitive user data
+backups/
