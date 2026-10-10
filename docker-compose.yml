@@ -22,6 +22,7 @@ services:
       context: ./backend
     restart: unless-stopped
     environment:
+      SQL_ECHO: ${SQL_ECHO:-false}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       APP_ENV: ${APP_ENV:-development}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}
