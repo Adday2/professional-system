@@ -11,6 +11,11 @@ import time
 
 from fastapi import Request
 
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+
+from app.core.limiter import limiter
+
 log_level = os.getenv("LOG_LEVEL", "INFO").upper()
 
 logging.basicConfig(
@@ -34,6 +39,13 @@ app = FastAPI(
     docs_url="/docs" if enable_api_docs else None,
     redoc_url="/redoc" if enable_api_docs else None,
     openapi_url="/openapi.json" if enable_api_docs else None,
+)
+
+app.state.limiter = limiter
+
+app.add_exception_handler(
+    RateLimitExceeded,
+    _rate_limit_exceeded_handler,
 )
 
 cors_origins = [
