@@ -6,6 +6,19 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.routes.auth import router as auth_router
 from app.routes.users import router as users_router
 
+import logging
+import time
+
+from fastapi import Request
+
+log_level = os.getenv("LOG_LEVEL", "INFO").upper()
+
+logging.basicConfig(
+    level=getattr(logging, log_level, logging.INFO),
+    format="%(asctime)s %(levelname)s %(name)s %(message)s",
+)
+
+logger = logging.getLogger("professional_system")
 
 app_environment = os.getenv(
     "APP_ENV",
@@ -52,3 +65,31 @@ def root():
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    start_time = time.perf_counter()
+
+    try:
+        response = await call_next(request)
+    except Exception:
+        logger.exception(
+            "Unhandled request error method=%s path=%s",
+            request.method,
+            request.url.path,
+        )
+        raise
+
+    duration_ms = (
+        time.perf_counter() - start_time
+    ) * 1000
+
+    logger.info(
+        "Request completed method=%s path=%s status=%s duration_ms=%.2f",
+        request.method,
+        request.url.path,
+        response.status_code,
+        duration_ms,
+    )
+
+    return response
