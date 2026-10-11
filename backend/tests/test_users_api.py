@@ -224,3 +224,25 @@ def test_invalid_role_is_rejected(
     )
 
     assert response.status_code == 422
+
+def test_admin_cannot_delete_own_account(
+    client,
+    admin_user,
+):
+    token = get_token(
+        client,
+        admin_user.email,
+        "AdminPass123!",
+    )
+
+    response = client.delete(
+        f"/users/{admin_user.id}",
+        headers={
+            "Authorization": f"Bearer {token}",
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == (
+        "You cannot delete your own account."
+    )

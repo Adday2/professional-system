@@ -75,10 +75,10 @@ def create_user(
 @router.delete(
     "/{user_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    dependencies=[Depends(require_admin)],
 )
 def delete_user(
     user_id: int,
+    current_admin: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
     user = (
@@ -91,6 +91,11 @@ def delete_user(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found.",
+        )
+    if user.id == current_admin.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You cannot delete your own account.",
         )
 
     db.delete(user)
