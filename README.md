@@ -17,6 +17,22 @@ A full-stack web application built with React, TypeScript, FastAPI, and PostgreS
 - Automated frontend and backend tests
 - GitHub Actions CI for testing, production builds, and Docker image validation
 
+## Screenshots
+
+### Login and Dashboard
+
+<p align="center">
+  <img src="docs/screenshots/login.png" alt="Login page" width="48%">
+  <img src="docs/screenshots/dashboard.png" alt="Main dashboard" width="48%">
+</p>
+
+### User Management and Profile
+
+<p align="center">
+  <img src="docs/screenshots/users.png" alt="Admin user management page" width="48%">
+  <img src="docs/screenshots/profile.png" alt="User profile page" width="48%">
+</p>
+
 ## Technology Stack
 
 ### Frontend
