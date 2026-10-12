@@ -1,3 +1,4 @@
+
 name: Professional System CI
 
 on:
@@ -13,7 +14,7 @@ permissions:
 
 jobs:
   frontend:
-    name: Frontend tests and build
+    name: Frontend tests, security audit and build
     runs-on: ubuntu-latest
 
     steps:
@@ -31,6 +32,10 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      - name: Audit frontend dependencies
+        working-directory: frontend
+        run: npm audit --audit-level=moderate
+
       - name: Run frontend tests
         working-directory: frontend
         run: npm test
@@ -40,7 +45,7 @@ jobs:
         run: npm run build
 
   backend:
-    name: Backend tests
+    name: Backend tests and security audit
     runs-on: ubuntu-latest
 
     steps:
@@ -54,11 +59,18 @@ jobs:
           cache: pip
           cache-dependency-path: backend/requirements.txt
 
-      - name: Install backend dependencies
-        working-directory: backend
+      - name: Install pip-audit
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt
+          python -m pip install pip-audit
+
+      - name: Audit backend dependencies
+        working-directory: backend
+        run: pip-audit -r requirements.txt
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: python -m pip install -r requirements.txt
 
       - name: Run backend tests
         working-directory: backend
