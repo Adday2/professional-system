@@ -11,7 +11,7 @@ from sqlalchemy.pool import StaticPool
 os.environ["APP_ENV"] = "test"
 os.environ["DATABASE_URL"] = "sqlite://"
 os.environ["JWT_SECRET_KEY"] = (
-    "pytest-only-secret-key-not-for-production-123456"
+    "test-only-jwt-signing-key-for-unit-tests-123456"
 )
 os.environ["JWT_ALGORITHM"] = "HS256"
 os.environ["JWT_ACCESS_TOKEN_EXPIRE_MINUTES"] = "30"

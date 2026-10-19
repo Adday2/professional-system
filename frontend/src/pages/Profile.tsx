@@ -76,6 +76,11 @@ function Profile() {
         new_password: newPassword,
       })
 
+      sessionStorage.setItem(
+        'access_token',
+        response.access_token,
+      )
+
       setCurrentPassword('')
       setNewPassword('')
       setConfirmPassword('')

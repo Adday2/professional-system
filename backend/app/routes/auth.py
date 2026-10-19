@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 
 from app.core.dependencies import get_current_user
 from app.core.security import (
@@ -18,6 +19,12 @@ router = APIRouter(
     tags=["Authentication"],
 )
 
+# Used to perform password verification when an account is not found.
+# This helps reduce timing differences between login failure paths.
+DUMMY_PASSWORD_HASH = hash_password(
+    "dummy-password-for-timing-equalization-only"
+)
+
 
 @router.post("/login")
 @limiter.limit("5/minute")
@@ -28,11 +35,19 @@ def login(
 ):
     user = (
         db.query(User)
-        .filter(User.email == form_data.username)
+        .filter(
+            func.lower(User.email)
+            == form_data.username.strip().lower()
+        )
         .first()
     )
 
     if not user or not user.password_hash:
+        verify_password(
+            form_data.password,
+            DUMMY_PASSWORD_HASH,
+        )
+
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password.",
@@ -51,6 +66,7 @@ def login(
 
     access_token = create_access_token(
         subject=str(user.id),
+        password_hash_value=user.password_hash,
     )
 
     return {
@@ -109,6 +125,13 @@ def change_password(
 
     db.commit()
 
+    access_token = create_access_token(
+        subject=str(current_user.id),
+        password_hash_value=current_user.password_hash,
+    )
+
     return {
-        "message": "Password changed successfully."
+        "message": "Password changed successfully.",
+        "access_token": access_token,
+        "token_type": "bearer",
     }

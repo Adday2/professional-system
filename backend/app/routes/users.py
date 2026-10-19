@@ -1,7 +1,13 @@
 
 import sqlite3
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    Query,
+    status,
+)
 from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -9,8 +15,9 @@ from sqlalchemy.orm import Session
 from app.core.dependencies import require_admin
 from app.core.security import hash_password
 from app.database import get_db
-from app.models import User
+from app.models import AuditLog, User
 from app.schemas import (
+    AuditLogResponse,
     RoleUpdate,
     UserCreate,
     UserResponse,
@@ -51,6 +58,27 @@ def _is_duplicate_email_error(exc: IntegrityError) -> bool:
         in str(original).lower()
     )
 
+
+def _add_audit_log(
+    db: Session,
+    actor: User,
+    action: str,
+    target_user_id: int | None,
+    target_email: str | None,
+    details: str | None = None,
+) -> None:
+    db.add(
+        AuditLog(
+            actor_user_id=actor.id,
+            actor_email=actor.email,
+            action=action,
+            target_user_id=target_user_id,
+            target_email=target_email,
+            details=details,
+        )
+    )
+
+
 @router.get(
     "/",
     response_model=list[UserResponse],
@@ -69,14 +97,15 @@ def get_users(
         .all()
     )
 
+
 @router.post(
     "/",
     response_model=UserResponse,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(require_admin)],
 )
 def create_user(
     user_data: UserCreate,
+    current_admin: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
     email = str(user_data.email).strip().lower()
@@ -99,14 +128,27 @@ def create_user(
         password_hash=hash_password(
             user_data.password.get_secret_value()
         ),
-        
     )
 
     db.add(user)
 
     try:
+        # Flush assigns the new user's ID without committing.
+        db.flush()
+
+        _add_audit_log(
+            db=db,
+            actor=current_admin,
+            action="user_created",
+            target_user_id=user.id,
+            target_email=user.email,
+            details="User account created.",
+        )
+
+        # User and audit entry commit together.
         db.commit()
         db.refresh(user)
+
     except IntegrityError as exc:
         db.rollback()
 
@@ -122,6 +164,28 @@ def create_user(
         ) from exc
 
     return user
+
+
+@router.get(
+    "/audit-logs",
+    response_model=list[AuditLogResponse],
+    dependencies=[Depends(require_admin)],
+)
+def get_audit_logs(
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=50, ge=1, le=100),
+    db: Session = Depends(get_db),
+):
+    return (
+        db.query(AuditLog)
+        .order_by(
+            AuditLog.created_at.desc(),
+            AuditLog.id.desc(),
+        )
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
 
 
 @router.delete(
@@ -151,6 +215,15 @@ def delete_user(
             detail="You cannot delete your own account.",
         )
 
+    _add_audit_log(
+        db=db,
+        actor=current_admin,
+        action="user_deleted",
+        target_user_id=user.id,
+        target_email=user.email,
+        details="User account deleted.",
+    )
+
     db.delete(user)
     db.commit()
 
@@ -158,11 +231,11 @@ def delete_user(
 @router.put(
     "/{user_id}",
     response_model=UserResponse,
-    dependencies=[Depends(require_admin)],
 )
 def update_user(
     user_id: int,
     user_data: UserUpdate,
+    current_admin: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
     user = (
@@ -194,12 +267,37 @@ def update_user(
             detail="A user with this email already exists.",
         )
 
+    old_name = user.name
+    old_email = user.email
+
     user.name = user_data.name
     user.email = email
 
+    changed_fields = []
+
+    if old_name != user.name:
+        changed_fields.append("name")
+
+    if old_email != user.email:
+        changed_fields.append("email")
+
     try:
+        if changed_fields:
+            _add_audit_log(
+                db=db,
+                actor=current_admin,
+                action="user_updated",
+                target_user_id=user.id,
+                target_email=user.email,
+                details=(
+                    "Updated fields: "
+                    + ", ".join(changed_fields)
+                ),
+            )
+
         db.commit()
         db.refresh(user)
+
     except IntegrityError as exc:
         db.rollback()
 
@@ -245,9 +343,21 @@ def update_user_role(
             detail="User not found.",
         )
 
-    user.role = role_data.role
+    old_role = user.role
 
-    db.commit()
-    db.refresh(user)
+    if old_role != role_data.role:
+        user.role = role_data.role
+
+        _add_audit_log(
+            db=db,
+            actor=current_admin,
+            action="role_changed",
+            target_user_id=user.id,
+            target_email=user.email,
+            details=f"Role changed from {old_role} to {user.role}.",
+        )
+
+        db.commit()
+        db.refresh(user)
 
     return user

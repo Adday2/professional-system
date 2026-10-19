@@ -51,11 +51,16 @@ export async function getCurrentUser(): Promise<CurrentUser> {
 
 export async function changePassword(
   data: ChangePasswordData,
-): Promise<{ message: string }> {
-  const response = await api.post<{ message: string }>(
-    '/auth/change-password',
-    data,
-  )
+): Promise<{
+  message: string
+  access_token: string
+  token_type: string
+}> {
+  const response = await api.post<{
+    message: string
+    access_token: string
+    token_type: string
+  }>('/auth/change-password', data)
 
   return response.data
 }

@@ -1,6 +1,12 @@
 import os
 
-from fastapi import FastAPI
+from fastapi import (
+    Depends,
+    FastAPI,
+    HTTPException,
+    Request,
+    status,
+)
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.routes.auth import router as auth_router
@@ -9,12 +15,17 @@ from app.routes.users import router as users_router
 import logging
 import time
 
-from fastapi import Request
-
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
 from app.core.limiter import limiter
+
+from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
+
+from app.database import get_db
+
 
 log_level = os.getenv("LOG_LEVEL", "INFO").upper()
 
@@ -27,7 +38,7 @@ logger = logging.getLogger("professional_system")
 
 app_environment = os.getenv(
     "APP_ENV",
-    "development",
+    "production",
 ).strip().lower()
 
 enable_api_docs = app_environment != "production"
@@ -60,9 +71,18 @@ cors_origins = [
 app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_credentials=False,
+    allow_methods=[
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE",
+    ],
+    allow_headers=[
+        "Authorization",
+        "Content-Type",
+    ],
 )
 
 app.include_router(auth_router)
@@ -75,8 +95,22 @@ def root():
 
 
 @app.get("/health")
-def health():
-    return {"status": "ok"}
+def health(db: Session = Depends(get_db)):
+    try:
+        db.execute(text("SELECT 1"))
+    except SQLAlchemyError as exc:
+        logger.warning(
+            "Health check failed: database unavailable"
+        )
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database unavailable.",
+        ) from exc
+
+    return {
+        "status": "ok",
+        "database": "ok",
+    }
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):

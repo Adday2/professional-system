@@ -1,9 +1,15 @@
+
+import hmac
+
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jwt.exceptions import InvalidTokenError
 from sqlalchemy.orm import Session
 
-from app.core.security import decode_access_token
+from app.core.security import (
+    decode_access_token,
+    password_token_version,
+)
 from app.database import get_db
 from app.models import User
 
@@ -26,8 +32,12 @@ def get_current_user(
     try:
         payload = decode_access_token(token)
         subject = payload.get("sub")
+        token_password_version = payload.get("pwdv")
 
-        if subject is None:
+        if (
+            subject is None
+            or not isinstance(token_password_version, str)
+        ):
             raise credentials_exception
 
         user_id = int(subject)
@@ -41,7 +51,17 @@ def get_current_user(
         .first()
     )
 
-    if user is None:
+    if user is None or not user.password_hash:
+        raise credentials_exception
+
+    expected_version = password_token_version(
+        user.password_hash
+    )
+
+    if not hmac.compare_digest(
+        token_password_version,
+        expected_version,
+    ):
         raise credentials_exception
 
     return user
