@@ -1,6 +1,8 @@
-from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, status
+import sqlite3
+
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -22,14 +24,50 @@ router = APIRouter(
 )
 
 
+def _is_duplicate_email_error(exc: IntegrityError) -> bool:
+    original = exc.orig
+
+    sqlstate = (
+        getattr(original, "sqlstate", None)
+        or getattr(original, "pgcode", None)
+    )
+
+    if sqlstate == "23505":
+        diagnostic = getattr(original, "diag", None)
+        constraint = getattr(
+            diagnostic,
+            "constraint_name",
+            None,
+        )
+
+        return (
+            constraint is None
+            or "email" in constraint.lower()
+        )
+
+    return (
+        isinstance(original, sqlite3.IntegrityError)
+        and "unique constraint failed: users.email"
+        in str(original).lower()
+    )
+
 @router.get(
     "/",
     response_model=list[UserResponse],
     dependencies=[Depends(require_admin)],
 )
-def get_users(db: Session = Depends(get_db)):
-    return db.query(User).all()
-
+def get_users(
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=100, ge=1, le=100),
+    db: Session = Depends(get_db),
+):
+    return (
+        db.query(User)
+        .order_by(User.id)
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
 
 @router.post(
     "/",
@@ -41,13 +79,27 @@ def create_user(
     user_data: UserCreate,
     db: Session = Depends(get_db),
 ):
+    email = str(user_data.email).strip().lower()
+
+    existing_user = (
+        db.query(User)
+        .filter(func.lower(User.email) == email)
+        .first()
+    )
+
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="A user with this email already exists.",
+        )
+
     user = User(
         name=user_data.name,
-        email=user_data.email,
+        email=email,
         password_hash=hash_password(
             user_data.password.get_secret_value()
         ),
-        created_at=datetime.now(),
+        
     )
 
     db.add(user)
@@ -58,7 +110,7 @@ def create_user(
     except IntegrityError as exc:
         db.rollback()
 
-        if getattr(exc.orig, "sqlstate", None) == "23505":
+        if _is_duplicate_email_error(exc):
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="A user with this email already exists.",
@@ -92,6 +144,7 @@ def delete_user(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found.",
         )
+
     if user.id == current_admin.id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -124,8 +177,25 @@ def update_user(
             detail="User not found.",
         )
 
+    email = str(user_data.email).strip().lower()
+
+    existing_user = (
+        db.query(User)
+        .filter(
+            func.lower(User.email) == email,
+            User.id != user.id,
+        )
+        .first()
+    )
+
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="A user with this email already exists.",
+        )
+
     user.name = user_data.name
-    user.email = user_data.email
+    user.email = email
 
     try:
         db.commit()
@@ -133,7 +203,7 @@ def update_user(
     except IntegrityError as exc:
         db.rollback()
 
-        if getattr(exc.orig, "sqlstate", None) == "23505":
+        if _is_duplicate_email_error(exc):
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="A user with this email already exists.",

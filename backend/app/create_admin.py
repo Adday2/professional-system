@@ -1,4 +1,3 @@
-from datetime import datetime
 from getpass import getpass
 
 from pydantic import EmailStr, TypeAdapter, ValidationError
@@ -55,7 +54,6 @@ def main() -> None:
             email=email,
             password_hash=hash_password(password),
             role="admin",
-            created_at=datetime.now(),
         )
 
         db.add(admin)
