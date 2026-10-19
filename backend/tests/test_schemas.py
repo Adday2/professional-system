@@ -21,7 +21,7 @@ def test_user_update_normalizes_email():
     )
 
     assert str(user.email) == "bob@example.com"
-    
+
 def test_user_create_rejects_name_over_100_characters():
     with pytest.raises(ValidationError):
         UserCreate(
