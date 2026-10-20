@@ -70,6 +70,17 @@ class UserResponse(BaseModel):
         "from_attributes": True
     }
 
+class UserListResponse(BaseModel):
+    items: list[UserResponse]
+    total: int
+    skip: int
+    limit: int
+
+
+class UserStatsResponse(BaseModel):
+    total_users: int
+    users_created_today: int
+    latest_user: UserResponse | None
 
 class AuditLogResponse(BaseModel):
     id: int

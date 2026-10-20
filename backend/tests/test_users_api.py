@@ -412,14 +412,22 @@ def test_get_users_supports_pagination(client, admin_user):
         headers=headers,
     )
 
+    first_page = first_response.json()
+    second_page = second_response.json()
+
     assert first_response.status_code == 200
     assert second_response.status_code == 200
-    assert len(first_response.json()) == 1
-    assert len(second_response.json()) == 1
+
+    assert first_page["total"] == 2
+    assert first_page["skip"] == 0
+    assert first_page["limit"] == 1
+
+    assert len(first_page["items"]) == 1
+    assert len(second_page["items"]) == 1
 
     assert (
-        first_response.json()[0]["id"]
-        != second_response.json()[0]["id"]
+        first_page["items"][0]["id"]
+        != second_page["items"][0]["id"]
     )
 
 def test_creating_user_writes_audit_log(
@@ -705,3 +713,51 @@ def test_regular_user_cannot_view_audit_logs(
     )
 
     assert response.status_code == 403
+
+def test_get_users_searches_across_matching_users(
+    client,
+    admin_user,
+    regular_user,
+):
+    token = get_token(
+        client,
+        admin_user.email,
+        "AdminPass123!",
+    )
+
+    response = client.get(
+        "/users/?search=USER",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 200
+
+    payload = response.json()
+
+    assert payload["total"] == 1
+    assert len(payload["items"]) == 1
+    assert payload["items"][0]["id"] == regular_user.id
+
+def test_user_stats_returns_total_and_latest_user(
+    client,
+    admin_user,
+    regular_user,
+):
+    token = get_token(
+        client,
+        admin_user.email,
+        "AdminPass123!",
+    )
+
+    response = client.get(
+        "/users/stats",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 200
+
+    payload = response.json()
+
+    assert payload["total_users"] == 2
+    assert payload["users_created_today"] >= 0
+    assert payload["latest_user"] is not None

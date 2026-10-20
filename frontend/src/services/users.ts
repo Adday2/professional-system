@@ -1,3 +1,4 @@
+
 import api from './api'
 
 export interface User {
@@ -6,6 +7,19 @@ export interface User {
   email: string
   role: 'admin' | 'user'
   created_at: string
+}
+
+export interface UserPage {
+  items: User[]
+  total: number
+  skip: number
+  limit: number
+}
+
+export interface UserStats {
+  total_users: number
+  users_created_today: number
+  latest_user: User | null
 }
 
 export interface CreateUserData {
@@ -23,8 +37,42 @@ export interface RoleUpdateData {
   role: 'admin' | 'user'
 }
 
-export async function getUsers(): Promise<User[]> {
-  const response = await api.get<User[]>('/users/')
+export interface GetUsersOptions {
+  skip?: number
+  limit?: number
+  search?: string
+}
+
+export async function getUsers(
+  options: GetUsersOptions = {},
+): Promise<UserPage> {
+  const {
+    skip = 0,
+    limit = 10,
+    search = '',
+  } = options
+
+  const response = await api.get<UserPage>(
+    '/users/',
+    {
+      params: {
+        skip,
+        limit,
+        ...(search.trim()
+          ? { search: search.trim() }
+          : {}),
+      },
+    },
+  )
+
+  return response.data
+}
+
+export async function getUserStats(): Promise<UserStats> {
+  const response = await api.get<UserStats>(
+    '/users/stats',
+  )
+
   return response.data
 }
 
@@ -35,6 +83,7 @@ export async function createUser(
     '/users/',
     data,
   )
+
   return response.data
 }
 
@@ -52,6 +101,7 @@ export async function updateUser(
     `/users/${id}`,
     data,
   )
+
   return response.data
 }
 
@@ -63,5 +113,6 @@ export async function updateUserRole(
     `/users/${id}/role`,
     data,
   )
+
   return response.data
 }

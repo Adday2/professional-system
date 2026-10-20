@@ -1,5 +1,6 @@
 
 import sqlite3
+from datetime import datetime, timedelta, timezone
 
 from fastapi import (
     APIRouter,
@@ -17,6 +18,8 @@ from app.core.security import hash_password
 from app.database import get_db
 from app.models import AuditLog, User
 from app.schemas import (
+    UserListResponse,
+    UserStatsResponse,
     AuditLogResponse,
     RoleUpdate,
     UserCreate,
@@ -81,22 +84,85 @@ def _add_audit_log(
 
 @router.get(
     "/",
-    response_model=list[UserResponse],
+    response_model=UserListResponse,
     dependencies=[Depends(require_admin)],
 )
 def get_users(
     skip: int = Query(default=0, ge=0),
-    limit: int = Query(default=100, ge=1, le=100),
+    limit: int = Query(default=10, ge=1, le=100),
+    search: str | None = Query(default=None, max_length=100),
     db: Session = Depends(get_db),
 ):
-    return (
-        db.query(User)
-        .order_by(User.id)
+    query = db.query(User)
+
+    search_term = (search or "").strip()
+
+    if search_term:
+        pattern = f"%{search_term}%"
+        query = query.filter(
+            User.name.ilike(pattern)
+            | User.email.ilike(pattern)
+        )
+
+    total = query.count()
+
+    items = (
+        query.order_by(User.id.desc())
         .offset(skip)
         .limit(limit)
         .all()
     )
 
+    return {
+        "items": items,
+        "total": total,
+        "skip": skip,
+        "limit": limit,
+    }
+
+@router.get(
+    "/stats",
+    response_model=UserStatsResponse,
+    dependencies=[Depends(require_admin)],
+)
+def get_user_stats(
+    db: Session = Depends(get_db),
+):
+    now = datetime.now(timezone.utc)
+    start_of_day = now.replace(
+        hour=0,
+        minute=0,
+        second=0,
+        microsecond=0,
+    )
+    start_of_next_day = start_of_day + timedelta(days=1)
+
+    total_users = db.query(func.count(User.id)).scalar() or 0
+
+    users_created_today = (
+        db.query(func.count(User.id))
+        .filter(
+            User.created_at >= start_of_day,
+            User.created_at < start_of_next_day,
+        )
+        .scalar()
+        or 0
+    )
+
+    latest_user = (
+        db.query(User)
+        .order_by(
+            User.created_at.desc(),
+            User.id.desc(),
+        )
+        .first()
+    )
+
+    return {
+        "total_users": total_users,
+        "users_created_today": users_created_today,
+        "latest_user": latest_user,
+    }
 
 @router.post(
     "/",

@@ -1,19 +1,20 @@
+
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../contexts/useAuth'
 import { getHealth } from '../services/system'
-import { getUsers } from '../services/users'
+import { getUserStats } from '../services/users'
 
 function Dashboard() {
   const { user } = useAuth()
-
   const isAdmin = user?.role === 'admin'
 
   const {
-    data: users = [],
+    data: userStats,
     isLoading: usersLoading,
+    isError: usersError,
   } = useQuery({
-    queryKey: ['users'],
-    queryFn: getUsers,
+    queryKey: ['user-stats'],
+    queryFn: getUserStats,
     enabled: isAdmin,
   })
 
@@ -27,26 +28,6 @@ function Dashboard() {
     refetchInterval: 30_000,
   })
 
-  const today = new Date().toDateString()
-
-  const usersCreatedToday = users.filter(
-    (currentUser) =>
-      new Date(
-        currentUser.created_at,
-      ).toDateString() === today,
-  ).length
-
-  const latestUser =
-    users.length > 0
-      ? [...users].sort(
-          (a, b) =>
-            new Date(b.created_at).getTime() -
-            new Date(a.created_at).getTime(),
-        )[0]
-      : null
-
-  const systemLoading = healthLoading
-
   const systemOnline =
     !healthError && health?.status === 'ok'
 
@@ -54,9 +35,7 @@ function Dashboard() {
     <div className="dashboard">
       <div className="page-header">
         <h1>Dashboard</h1>
-        <p>
-          Welcome back, {user?.name}.
-        </p>
+        <p>Welcome back, {user?.name}.</p>
       </div>
 
       {isAdmin ? (
@@ -65,11 +44,12 @@ function Dashboard() {
             <span className="dashboard-card-label">
               Total Users
             </span>
-
             <strong className="dashboard-card-value">
               {usersLoading
                 ? '...'
-                : users.length}
+                : usersError
+                  ? '—'
+                  : userStats?.total_users ?? 0}
             </strong>
           </div>
 
@@ -77,11 +57,12 @@ function Dashboard() {
             <span className="dashboard-card-label">
               Users Created Today
             </span>
-
             <strong className="dashboard-card-value">
               {usersLoading
                 ? '...'
-                : usersCreatedToday}
+                : usersError
+                  ? '—'
+                  : userStats?.users_created_today ?? 0}
             </strong>
           </div>
 
@@ -89,13 +70,12 @@ function Dashboard() {
             <span className="dashboard-card-label">
               Latest User
             </span>
-
             <strong className="dashboard-card-value dashboard-card-text">
               {usersLoading
                 ? '...'
-                : latestUser
-                  ? latestUser.name
-                  : 'No users'}
+                : usersError
+                  ? 'Unavailable'
+                  : userStats?.latest_user?.name ?? 'No users'}
             </strong>
           </div>
 
@@ -103,19 +83,16 @@ function Dashboard() {
             <span className="dashboard-card-label">
               System Status
             </span>
-
             <strong
               className={`dashboard-card-value dashboard-status ${
-                healthError
-                  ? 'dashboard-status-offline'
-                  : ''
+                healthError ? 'dashboard-status-offline' : ''
               }`}
             >
-              {systemLoading
-                ? '● Checking...'
+              {healthLoading
+                ? 'Checking...'
                 : systemOnline
-                  ? '● Online'
-                  : '● Offline'}
+                  ? 'Online'
+                  : 'Offline'}
             </strong>
           </div>
         </div>
@@ -125,7 +102,6 @@ function Dashboard() {
             <span className="dashboard-card-label">
               Account
             </span>
-
             <strong className="dashboard-card-value dashboard-card-text">
               Active
             </strong>
@@ -135,7 +111,6 @@ function Dashboard() {
             <span className="dashboard-card-label">
               Role
             </span>
-
             <strong className="dashboard-card-value dashboard-card-text">
               User
             </strong>
@@ -145,19 +120,16 @@ function Dashboard() {
             <span className="dashboard-card-label">
               System Status
             </span>
-
             <strong
               className={`dashboard-card-value dashboard-status ${
-                healthError
-                  ? 'dashboard-status-offline'
-                  : ''
+                healthError ? 'dashboard-status-offline' : ''
               }`}
             >
-              {systemLoading
-                ? '● Checking...'
+              {healthLoading
+                ? 'Checking...'
                 : systemOnline
-                  ? '● Online'
-                  : '● Offline'}
+                  ? 'Online'
+                  : 'Offline'}
             </strong>
           </div>
         </div>

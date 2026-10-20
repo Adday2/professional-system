@@ -77,8 +77,14 @@ def test_admin_can_view_users(client, admin_user):
     )
 
     assert response.status_code == 200
-    assert len(response.json()) == 1
 
+    payload = response.json()
+
+    assert payload["total"] == 1
+    assert payload["skip"] == 0
+    assert payload["limit"] == 10
+    assert len(payload["items"]) == 1
+    assert payload["items"][0]["email"] == admin_user.email
 
 def test_regular_user_cannot_view_users(
     client,
