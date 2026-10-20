@@ -8,5 +8,5 @@ pydantic==2.13.5
 python-dotenv==1.2.3
 python-multipart==0.0.32
 slowapi==0.1.10
-SQLAlchemy==2.1.1
+SQLAlchemy==2.1.5
 uvicorn==0.54.0
