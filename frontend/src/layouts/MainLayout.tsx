@@ -1,5 +1,6 @@
 import {
   CircleUserRound,
+  ClipboardList,
   LayoutDashboard,
   LogOut,
   UserCircle,
@@ -46,13 +47,17 @@ function MainLayout() {
           </NavLink>
 
           {user?.role === 'admin' && (
-            <NavLink to="/users">
-              <UsersRound
-                size={18}
-                strokeWidth={2}
-              />
-              <span>Users</span>
-            </NavLink>
+            <>
+              <NavLink to="/users">
+                <UsersRound size={18} strokeWidth={2} />
+                <span>Users</span>
+              </NavLink>
+
+              <NavLink to="/audit-logs">
+                <ClipboardList size={18} strokeWidth={2} />
+                <span>Audit Log</span>
+              </NavLink>
+            </>
           )}
         </nav>
       </aside>

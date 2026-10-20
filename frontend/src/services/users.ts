@@ -116,3 +116,28 @@ export async function updateUserRole(
 
   return response.data
 }
+
+export interface AuditLog {
+  id: number
+  actor_user_id: number | null
+  actor_email: string
+  action: string
+  target_user_id: number | null
+  target_email: string | null
+  details: string | null
+  created_at: string
+}
+
+export async function getAuditLogs(
+  skip = 0,
+  limit = 11,
+): Promise<AuditLog[]> {
+  const response = await api.get<AuditLog[]>(
+    '/users/audit-logs',
+    {
+      params: { skip, limit },
+    },
+  )
+
+  return response.data
+}

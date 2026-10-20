@@ -16,6 +16,12 @@ A full-stack web application built with React, TypeScript, FastAPI, and PostgreS
 - Docker Compose for running the complete application
 - Automated frontend and backend tests
 - GitHub Actions CI for testing, production builds, and Docker image validation
+- Paginated user management with server-side search
+- Accurate dashboard statistics across all users
+- Administrator audit log with action history and pagination
+- Database-aware health checks
+- Security headers, restrictive Content Security Policy, and same-origin API proxy
+- Dependency vulnerability audits and frontend linting in GitHub Actions
 
 ## Screenshots
 
@@ -81,21 +87,35 @@ professional-system/
 │   ├── app/
 │   │   ├── core/
 │   │   ├── routes/
+│   │   ├── create_admin.py
+│   │   ├── database.py
 │   │   ├── models.py
 │   │   ├── schemas.py
 │   │   └── main.py
 │   ├── migrations/
+│   │   └── versions/
 │   ├── tests/
 │   ├── Dockerfile
-│   └── requirements.txt
+│   ├── requirements.txt
+│   └── requirements-dev.txt
+├── docs/
+│   └── screenshots/
 ├── frontend/
 │   ├── src/
+│   │   ├── components/
+│   │   ├── contexts/
+│   │   ├── layouts/
+│   │   ├── pages/
+│   │   └── services/
 │   ├── Dockerfile
 │   ├── nginx.conf
 │   └── package.json
 ├── scripts/
-│   └── test-all.ps1
+│   ├── backup-db.ps1
+│   ├── test-all.ps1
+│   └── test-restore.ps1
 ├── .env.example
+├── .gitignore
 ├── docker-compose.yml
 └── README.md
 ```
@@ -131,6 +151,22 @@ Open `.env` and replace the placeholder values with secure, randomly generated s
 Configure the PostgreSQL database name, username and password, JWT secret, application environment, log level, CORS origins, and frontend API URL.
 
 **Important:** Never commit your real `.env` file or share its secrets. The file is excluded from Git.
+
+Generate strong, random secrets locally instead of using example values:
+
+```powershell
+# Generate a JWT signing secret
+python -c "import secrets; print(secrets.token_urlsafe(48))"
+
+# Generate a PostgreSQL password
+python -c "import secrets; print(secrets.token_urlsafe(32))"
+```
+
+For local development, set `APP_ENV=development` in your local
+`.env` file. In production, keep `APP_ENV=production`.
+
+When development mode is enabled, the API documentation is available
+at http://localhost:8000/docs.
 
 ### 3. Build and start the application
 
@@ -195,6 +231,15 @@ docker compose down
 ```
 
 **Warning:** `docker compose down -v` removes the Compose database volume and its stored data. Do not use it unless you deliberately intend to delete that data.
+
+### Database Backup and Restore Verification
+
+The repository includes PowerShell scripts for database backup and restore testing:
+
+- `scripts/backup-db.ps1` — creates a database backup.
+- `scripts/test-restore.ps1` — tests whether a backup can be restored.
+
+Review each script for required parameters before running it. Store backups securely because they may contain personal data. Never commit database backups to Git.
 
 ## Testing
 

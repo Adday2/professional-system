@@ -10,6 +10,7 @@ import Dashboard from './pages/Dashboard'
 import Login from './pages/Login'
 import Users from './pages/Users'
 import Profile from './pages/Profile'
+import AuditLogs from './pages/AuditLogs'
 
 function App() {
   return (
@@ -24,10 +25,8 @@ function App() {
             <Route path="/profile" element={<Profile />} />
 
             <Route element={<AdminRoute />}>
-              <Route
-                path="/users"
-                element={<Users />}
-              />
+              <Route path="/users" element={<Users />} />
+              <Route path="/audit-logs" element={<AuditLogs />} />
             </Route>
           </Route>
         </Route>
