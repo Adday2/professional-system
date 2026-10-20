@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth } from '../contexts/useAuth'
 import { getHealth } from '../services/system'
 import { getUsers } from '../services/users'
 

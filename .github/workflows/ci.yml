@@ -32,6 +32,10 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      - name: Lint frontend
+        working-directory: frontend
+        run: npm run lint
+
       - name: Audit frontend dependencies
         working-directory: frontend
         run: npm audit --audit-level=moderate
@@ -110,4 +114,4 @@ jobs:
           push: false
           tags: professional-system-frontend:ci
           build-args: |
-            VITE_API_URL=http://localhost:8000
+            VITE_API_URL=/

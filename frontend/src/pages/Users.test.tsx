@@ -27,7 +27,7 @@ const {
   mockUpdateUserRole: vi.fn(),
 }))
 
-vi.mock('../contexts/AuthContext', () => ({
+vi.mock('../contexts/useAuth', () => ({
   useAuth: () => ({
     user: {
       id: 1,

@@ -1,6 +1,4 @@
 import {
-  createContext,
-  useContext,
   useEffect,
   useState,
   type ReactNode,
@@ -11,18 +9,10 @@ import {
   login as loginRequest,
   type CurrentUser,
 } from '../services/auth'
-
-interface AuthContextValue {
-  user: CurrentUser | null
-  isLoading: boolean
-  isAuthenticated: boolean
-  login: (email: string, password: string) => Promise<void>
-  logout: () => void
-}
-
-const AuthContext = createContext<
-  AuthContextValue | undefined
->(undefined)
+import {
+  AuthContext,
+  type AuthContextValue,
+} from './auth-context'
 
 interface AuthProviderProps {
   children: ReactNode
@@ -36,43 +26,53 @@ export function AuthProvider({
   const [user, setUser] =
     useState<CurrentUser | null>(null)
 
-  const [isLoading, setIsLoading] =
-    useState(true)
+  const [isLoading, setIsLoading] = useState(
+    () => sessionStorage.getItem('access_token') !== null,
+  )
 
   useEffect(() => {
     const token =
       sessionStorage.getItem('access_token')
 
+    // Initial loading state is already false when there is no token.
     if (!token) {
-      setIsLoading(false)
       return
     }
 
+    let cancelled = false
+
     getCurrentUser()
       .then((currentUser) => {
-        setUser(currentUser)
+        if (!cancelled) {
+          setUser(currentUser)
+        }
       })
       .catch(() => {
-        sessionStorage.removeItem(
-          'access_token',
-        )
+        if (cancelled) {
+          return
+        }
 
+        sessionStorage.removeItem('access_token')
         queryClient.clear()
         setUser(null)
       })
       .finally(() => {
-        setIsLoading(false)
+        if (!cancelled) {
+          setIsLoading(false)
+        }
       })
+
+    return () => {
+      cancelled = true
+    }
   }, [queryClient])
 
   useEffect(() => {
     function handleSessionExpired() {
-      sessionStorage.removeItem(
-        'access_token',
-      )
-
+      sessionStorage.removeItem('access_token')
       queryClient.clear()
       setUser(null)
+      setIsLoading(false)
     }
 
     window.addEventListener(
@@ -104,26 +104,22 @@ export function AuthProvider({
 
     queryClient.clear()
 
-    const currentUser =
-      await getCurrentUser()
-
+    const currentUser = await getCurrentUser()
     setUser(currentUser)
+    setIsLoading(false)
   }
 
   function logout() {
-    sessionStorage.removeItem(
-      'access_token',
-    )
-
+    sessionStorage.removeItem('access_token')
     queryClient.clear()
     setUser(null)
+    setIsLoading(false)
   }
 
   const value: AuthContextValue = {
     user,
     isLoading,
-    isAuthenticated:
-      user !== null,
+    isAuthenticated: user !== null,
     login,
     logout,
   }
@@ -133,16 +129,4 @@ export function AuthProvider({
       {children}
     </AuthContext.Provider>
   )
-}
-
-export function useAuth(): AuthContextValue {
-  const context = useContext(AuthContext)
-
-  if (!context) {
-    throw new Error(
-      'useAuth must be used inside an AuthProvider.',
-    )
-  }
-
-  return context
 }

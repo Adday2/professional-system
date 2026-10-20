@@ -7,7 +7,7 @@ import {
 import {
   changePassword,
 } from '../services/auth'
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth } from '../contexts/useAuth'
 
 interface ApiErrorResponse {
   detail?: string
