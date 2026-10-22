@@ -22,6 +22,7 @@ services:
       context: ./backend
     restart: unless-stopped
     environment:
+      FORWARDED_ALLOW_IPS: "*"
       SQL_ECHO: ${SQL_ECHO:-false}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       APP_ENV: ${APP_ENV:-production}
@@ -50,7 +51,7 @@ services:
     build:
       context: ./frontend
       args:
-        VITE_API_URL: ${VITE_API_URL:-/}
+        VITE_API_URL: ${VITE_API_URL:-/api}
     restart: unless-stopped
     ports:
       - "127.0.0.1:5173:80"
